@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="data:,">
+<title>Stress Meter</title>
+<meta name="description" content="Stress Meter: a calm companion that reads your body and work rhythm and nudges you to rest before burnout.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&amp;family=Hanken+Grotesk:wght@400..700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#06874c}a:hover{color:#056b3c}
+button{font-family:inherit;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:2px solid #06874c;outline-offset:2px}
+.sm-enter{animation:smEnter 300ms cubic-bezier(.2,.8,.2,1) both}
+.sm-fade{animation:smFade 480ms ease-out both}
+.sm-modal{animation:smModal 380ms cubic-bezier(.2,.8,.2,1) both}
+.sm-toast{animation:smToast 280ms cubic-bezier(.2,.8,.2,1) both}
+.sm-sheet-in{animation:smSheetIn 320ms cubic-bezier(.2,.8,.2,1) both}
+.sm-sheet-out{animation:smSheetOut 200ms ease-in both}
+.sm-scrim-in{animation:smFade 240ms ease-out both}
+.sm-scrim-out{animation:smFadeOut 200ms ease-in both}
+.sm-draw{stroke-dasharray:400;stroke-dashoffset:400;animation:smDraw 900ms ease-out 150ms forwards}
+.sm-grow{transform-origin:bottom;animation:smGrow 640ms cubic-bezier(.2,.8,.2,1) both}
+.sm-breathe{animation:smBreathe 10s ease-in-out infinite}
+.sm-press{transition:transform 120ms ease-out,background-color 200ms ease,border-color 200ms ease,color 200ms ease}
+.sm-press:active{transform:scale(.97)}
+.sm-hero{transition:background-color 500ms ease}
+.sm-bar{transition:width 300ms linear}
+.sm-ring{transition:box-shadow 220ms ease}
+.sm-in-fwd{animation:smInFwd 320ms cubic-bezier(.2,.8,.2,1) both}
+.sm-in-back{animation:smInBack 320ms cubic-bezier(.2,.8,.2,1) both}
+.sm-out-fwd{animation:smOutFwd 240ms ease-in both;pointer-events:none}
+.sm-out-back{animation:smOutBack 240ms ease-in both;pointer-events:none}
+.sm-modal-out{animation:smModalOut 250ms ease-in both;pointer-events:none}
+.sm-toast-out{animation:smFadeOut 220ms ease-in both}
+@keyframes smInFwd{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes smInBack{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes smOutFwd{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-28px)}}
+@keyframes smOutBack{from{opacity:1;transform:none}to{opacity:0;transform:translateX(28px)}}
+@keyframes smModalOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(48px)}}
+@keyframes smEnter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes smFade{from{opacity:0}to{opacity:1}}
+@keyframes smFadeOut{from{opacity:1}to{opacity:0}}
+@keyframes smModal{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+@keyframes smToast{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes smSheetIn{from{transform:translateY(100%)}to{transform:none}}
+@keyframes smSheetOut{from{transform:none}to{transform:translateY(100%)}}
+@keyframes smDraw{to{stroke-dashoffset:0}}
+@keyframes smGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes smBreathe{0%{transform:scale(.86)}40%{transform:scale(1)}100%{transform:scale(.86)}}
+@media (prefers-reduced-motion: reduce){
+*{animation:none !important;transition:none !important}
+.sm-draw{stroke-dashoffset:0}
+}
+</style>
+<style>
+html,body{height:100%;background:#eef2ef}
+#stage{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 0;box-sizing:border-box}
+#phone{width:390px;height:844px;border-radius:44px;overflow:hidden;box-shadow:0 30px 80px -30px rgba(18,22,20,.35),0 0 0 1px #e4e9e5;transform-origin:top center;background:#fff}
+@media (max-width:430px){html,body{background:#fff}#stage{padding:0;align-items:flex-start}#phone{border-radius:0;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="stage"><div id="phone"><div style="height:100%;display:flex;align-items:center;justify-content:center;padding:40px;box-sizing:border-box;text-align:center;font:15px/22px -apple-system,system-ui,sans-serif;color:#4f5854">The app could not start here. This preview is blocking scripts. Open index.html in Chrome or Safari, or publish it with GitHub Pages.</div></div></div>
+
+<template id="app-template">
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #ffffff; color: #121614; font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif">
+
+<sc-if value="{{showTabs}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; overflow: hidden">
+
+<sc-if value="{{showHome}}" hint-placeholder-val="{{ true }}">
+<div class="{{homeCls}}" style="position: absolute; inset: 0; display: flex; flex-direction: column; isolation: isolate">
+<sc-for list="{{grads}}" as="g" hint-placeholder-count="5">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 450px; z-index: -1; background: {{g.bg}}; opacity: {{g.op}}; transition: opacity 600ms ease"></div>
+</sc-for>
+
+<header style="padding: 58px 20px 0">
+<h1 style="margin: 0; font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 20px; line-height: 26px; font-weight: 400; letter-spacing: -0.005em; color: #4f5854">{{greeting}}, Raj</h1>
+</header>
+
+<section aria-label="Your state" style="margin-top: 20px; flex: none; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 20px; min-height: 40px">
+<div>
+<sc-for list="{{heroes}}" as="h" hint-placeholder-count="1">
+<sc-if value="{{h.show}}" hint-placeholder-val="{{ true }}">
+<div class="sm-enter" style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 34px; line-height: 40px; font-weight: 600; letter-spacing: -0.035em; color: {{h.color}}">{{h.name}}</h2>
+</div>
+</sc-if>
+</sc-for>
+</div>
+</section>
+<div style="position: relative; height: 262px; margin-top: 6px; flex: none">
+<button type="button" class="sm-press" onClick="{{nextMood}}" aria-label="Show next state" style="position: absolute; left: 50%; bottom: 0; width: 202px; height: 262px; margin-left: -101px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<sc-if value="{{isMood.recharged}}" hint-placeholder-val="{{ false }}"><img class="sm-fade" src="assets/avatars/avatar-recharged.webp" alt="Avatar stretching with arms up" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom"></sc-if>
+<sc-if value="{{isMood.steady}}" hint-placeholder-val="{{ false }}"><img class="sm-fade" src="assets/avatars/avatar-steady.webp" alt="Avatar relaxing with a cup of chai" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom"></sc-if>
+<sc-if value="{{isMood.busy}}" hint-placeholder-val="{{ false }}"><img class="sm-fade" src="assets/avatars/avatar-busy.webp" alt="Avatar working on a laptop" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom"></sc-if>
+<sc-if value="{{isMood.stretched}}" hint-placeholder-val="{{ true }}"><img class="sm-fade" src="assets/avatars/avatar-stretched.webp" alt="Avatar rubbing his neck at the desk" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom"></sc-if>
+<sc-if value="{{isMood.pause}}" hint-placeholder-val="{{ false }}"><img class="sm-fade" src="assets/avatars/avatar-pause.webp" alt="Avatar resting his head on his hand" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom"></sc-if>
+</button>
+<button type="button" class="sm-press" onClick="{{openWhy}}" aria-label="Why this state" style="position: absolute; left: 50%; bottom: 10px; margin-left: 110px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<span style="display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: #ffffff; border: 1.5px solid #06874c; color: #06874c; font-size: 17px; line-height: 1; font-weight: 700; box-shadow: 0 4px 12px -4px rgba(18,22,20,0.25)">?</span>
+</button>
+</div>
+
+<div style="margin: 0 20px; height: 182px; flex: none; position: relative; z-index: 1">
+<sc-for list="{{advs}}" as="a" hint-placeholder-count="1">
+<sc-if value="{{a.show}}" hint-placeholder-val="{{ true }}">
+<section aria-label="Suggestion" class="sm-enter" style="height: 182px; box-sizing: border-box; padding: 16px; background: #ffffff; border: 1px solid #e4e9e5; border-radius: 16px; box-shadow: 0 10px 24px -14px rgba(18,22,20,0.22); display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -0.005em">{{a.head}}</p>
+<p style="margin: 0; font-size: 15px; line-height: 20px">{{a.body}}</p>
+<div style="display: flex; align-items: center; gap: 4px; margin-top: auto">
+<button type="button" class="sm-press" onClick="{{a.onCta}}" style="height: 44px; padding: 0 18px; border: 0; border-radius: 12px; background: #06874c; color: #ffffff; font-size: 15px; font-weight: 600; cursor: pointer">{{a.cta}}</button>
+<button type="button" class="sm-press" onClick="{{notNow}}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: transparent; color: #06874c; font-size: 15px; font-weight: 600; cursor: pointer">Not now</button>
+</div>
+</section>
+</sc-if>
+</sc-for>
+<sc-if value="{{showSnoozed}}" hint-placeholder-val="{{ false }}">
+<section aria-label="Suggestion" class="sm-enter" style="height: 182px; box-sizing: border-box; padding: 16px 20px; background: #ffffff; border: 1px solid #e4e9e5; border-radius: 16px; box-shadow: 0 10px 24px -14px rgba(18,22,20,0.22); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 6px">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06874c" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5 L11 15.5 L16.5 9.5"></path></svg>
+<p style="margin: 0; font-size: 17px; line-height: 24px; font-weight: 600">{{snoozeText}}</p>
+<button type="button" class="sm-press" onClick="{{undoSnooze}}" style="height: 44px; margin-left: -10px; padding: 0 10px; border: 0; border-radius: 12px; background: transparent; color: #06874c; font-size: 15px; font-weight: 600; cursor: pointer">Show suggestion again</button>
+</section>
+</sc-if>
+</div>
+
+<section aria-label="Your signals compared with your usual" style="margin: 12px 20px 0; flex: none; background: #ffffff; border: 1px solid #e4e9e5; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 24px -14px rgba(18,22,20,0.22)">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr))">
+<sc-for list="{{signals}}" as="s" hint-placeholder-count="4">
+<button type="button" class="sm-press" onClick="{{s.open}}" aria-label="{{s.aria}}" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 0; border-right: {{s.br}}; border-bottom: {{s.bb}}; background: transparent; color: #121614; text-align: left; cursor: pointer">
+<span style="display: flex; justify-content: space-between; align-items: baseline; gap: 6px; width: 100%">
+<span style="font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">{{s.label}}</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; line-height: 18px">{{s.value}}<span style="font-size: 11px; color: #4f5854"> {{s.unit}}</span></span>
+</span>
+<span style="display: flex; justify-content: space-between; align-items: center; gap: 6px; width: 100%">
+<span style="font-size: 15px; line-height: 20px; font-weight: 600; color: {{s.wordColor}}; transition: color 300ms ease">{{s.word}}</span>
+<svg width="56" height="20" viewBox="0 0 56 20" aria-hidden="true">
+<rect x="0" y="7" width="56" height="6" rx="2" fill="#eef2ef"></rect>
+<path class="sm-draw" d="{{s.d}}" fill="none" stroke="{{s.stroke}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"></path>
+<circle class="sm-fade" cx="{{s.endX}}" cy="{{s.endY}}" r="2.5" fill="{{s.stroke}}"></circle>
+</svg>
+</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+</div>
+</sc-if>
+
+<sc-if value="{{showInsights}}" hint-placeholder-val="{{ false }}">
+<div class="{{insightsCls}}" style="position: absolute; inset: 0; overflow-y: auto; padding-bottom: 112px; box-sizing: border-box">
+<header style="padding: 52px 20px 0; display: flex; flex-direction: column; gap: 4px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.08em; color: #4f5854">THIS WEEK · 5 TO 11 OCT</p>
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 30px; line-height: 34px; font-weight: 600; letter-spacing: -0.03em">Insights</h1>
+</header>
+<section aria-label="Your week" style="padding: 0 20px; margin-top: 24px">
+<p style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600; letter-spacing: -0.005em">Steady start, stretched from Wednesday, and the weekend brought you back.</p>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin-top: 16px">
+<sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+<button type="button" class="sm-press" onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" aria-label="{{d.label}}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-height: 76px; padding: 6px 0; border: 0; background: transparent; cursor: pointer">
+<span class="sm-ring" style="display: block; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: {{d.bg}}; box-shadow: {{d.ring}}">
+<sc-if value="{{d.is.recharged}}" hint-placeholder-val="{{ false }}"><img src="assets/avatars/face-recharged.webp" alt="" style="width: 100%; height: 100%; display: block"></sc-if>
+<sc-if value="{{d.is.steady}}" hint-placeholder-val="{{ true }}"><img src="assets/avatars/face-steady.webp" alt="" style="width: 100%; height: 100%; display: block"></sc-if>
+<sc-if value="{{d.is.busy}}" hint-placeholder-val="{{ false }}"><img src="assets/avatars/face-busy.webp" alt="" style="width: 100%; height: 100%; display: block"></sc-if>
+<sc-if value="{{d.is.stretched}}" hint-placeholder-val="{{ false }}"><img src="assets/avatars/face-stretched.webp" alt="" style="width: 100%; height: 100%; display: block"></sc-if>
+<sc-if value="{{d.is.pause}}" hint-placeholder-val="{{ false }}"><img src="assets/avatars/face-pause.webp" alt="" style="width: 100%; height: 100%; display: block"></sc-if>
+</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.08em; color: {{d.color}}">{{d.day}}</span>
+</button>
+</sc-for>
+</div>
+<div style="min-height: 64px; margin-top: 8px; padding: 12px 0; border-top: 1px solid #e4e9e5; border-bottom: 1px solid #e4e9e5">
+<sc-for list="{{dayCards}}" as="c" hint-placeholder-count="1">
+<sc-if value="{{c.show}}" hint-placeholder-val="{{ true }}">
+<div class="sm-enter">
+<p style="margin: 0; font-size: 15px; line-height: 22px; font-weight: 600">{{c.title}}</p>
+<p style="margin: 2px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">{{c.note}}</p>
+</div>
+</sc-if>
+</sc-for>
+</div>
+</section>
+
+<section aria-label="What drains you" style="padding: 0 20px; margin-top: 36px">
+<h2 style="margin: 0 0 8px; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 22px; line-height: 26px; font-weight: 600; letter-spacing: -0.02em">What drains you</h2>
+<div style="padding: 14px 0; border-top: 1px solid #e4e9e5">
+<p style="margin: 0; font-size: 15px; line-height: 22px; font-weight: 600">Meetings after 18:00</p>
+<p style="margin: 2px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">On 3 of the 4 days you had them, you ended the day stretched.</p>
+</div>
+<div style="padding: 14px 0; border-top: 1px solid #e4e9e5">
+<p style="margin: 0; font-size: 15px; line-height: 22px; font-weight: 600">Under 6 hours of sleep</p>
+<p style="margin: 2px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">Your heart rate ran higher than usual the whole next day.</p>
+</div>
+<div style="padding: 14px 0; border-top: 1px solid #e4e9e5; border-bottom: 1px solid #e4e9e5">
+<p style="margin: 0; font-size: 15px; line-height: 22px; font-weight: 600">Lunch at the desk</p>
+<p style="margin: 2px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">Afternoons after a desk lunch stayed busy until you logged off.</p>
+</div>
+</section>
+
+<section aria-label="What brings you back" style="padding: 0 20px; margin-top: 36px">
+<h2 style="margin: 0 0 8px; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 22px; line-height: 26px; font-weight: 600; letter-spacing: -0.02em">What brings you back</h2>
+<div style="padding: 14px 0; border-top: 1px solid #e4e9e5">
+<p style="margin: 0; font-size: 15px; line-height: 22px; font-weight: 600">Walks outside</p>
+<p style="margin: 2px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">Your heart rate settled within 8 minutes on most walks.</p>
+</div>
+<div style="padding: 14px 0; border-top: 1px solid #e4e9e5">
+<p style="margin: 0; font-size: 15px; line-height: 22px; font-weight: 600">Sleeping before midnight</p>
+<p style="margin: 2px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">You woke up recharged on both nights you did.</p>
+</div>
+<div style="padding: 14px 0; border-top: 1px solid #e4e9e5; border-bottom: 1px solid #e4e9e5">
+<p style="margin: 0; font-size: 15px; line-height: 22px; font-weight: 600">Breaks with no work talk</p>
+<p style="margin: 2px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">These settled you faster than breaks spent on calls or chat.</p>
+</div>
+</section>
+
+<section aria-label="Time you took back" style="padding: 0 20px; margin-top: 36px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 22px; line-height: 26px; font-weight: 600; letter-spacing: -0.02em">Time you took back</h2>
+<p style="margin: 12px 0 0; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.03em">{{breakTotalLabel}}</p>
+<p style="margin: 4px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">of real breaks, up from 55 min last week</p>
+<div role="img" aria-label="{{barsAria}}" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; margin-top: 20px; height: 100px">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="7">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100px">
+<div class="sm-grow" style="width: 100%; max-width: 28px; height: {{b.h}}; border-radius: 4px 4px 0 0; background: {{b.fill}}; animation-delay: {{b.delay}}"></div>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; color: #4f5854">{{b.day}}</span>
+</div>
+</sc-for>
+</div>
+<p style="margin: 20px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">Patterns from your own data. This is guidance, not a medical reading.</p>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{showProfile}}" hint-placeholder-val="{{ false }}">
+<div class="{{profileCls}}" style="position: absolute; inset: 0; overflow-y: auto; padding-bottom: 112px; box-sizing: border-box">
+<header style="padding: 52px 20px 0">
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 30px; line-height: 34px; font-weight: 600; letter-spacing: -0.03em">Profile</h1>
+<div style="display: flex; align-items: center; gap: 16px; margin-top: 20px">
+<span style="display: block; width: 64px; height: 64px; border-radius: 50%; overflow: hidden; background: #e3f6ea; flex: none"><img src="assets/avatars/face-steady.webp" alt="Your avatar" style="width: 100%; height: 100%; display: block"></span>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 20px; line-height: 24px; font-weight: 600; letter-spacing: -0.015em">Raj Sonar</span>
+<span style="font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">Your usual is learned from the last 14 days</span>
+</div>
+</div>
+</header>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+<section aria-label="{{g.title}}" style="padding: 0 20px; margin-top: 32px">
+<h2 style="margin: 0 0 8px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.08em; color: #4f5854">{{g.eyebrow}}</h2>
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+<button type="button" class="sm-press" onClick="{{r.open}}" style="display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 0; border: 0; border-top: 1px solid #e4e9e5; background: transparent; color: {{r.color}}; text-align: left; cursor: pointer">
+<span style="flex: 1; font-size: 15px; line-height: 22px; font-weight: 600">{{r.label}}</span>
+<span style="font-size: 15px; line-height: 22px; color: #4f5854">{{r.value}}</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4f5854" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6 L15 12 L9 18"></path></svg>
+</button>
+</sc-for>
+<div style="border-top: 1px solid #e4e9e5"></div>
+</section>
+</sc-for>
+<p style="margin: 24px 20px 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">Stress Meter gives guidance from your own patterns. It is not a medical device. Version 1.0</p>
+</div>
+</sc-if>
+
+</div>
+
+<nav aria-label="Main" class="sm-enter" style="position: absolute; left: 59px; bottom: 24px; width: 272px; height: 64px; box-sizing: border-box; padding: 0 8px; border-radius: 32px; background: #ffffff; border: 1px solid #e4e9e5; box-shadow: 0 1px 2px #1216140f, 0 8px 24px -6px #12161424; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr))">
+<button type="button" class="sm-press" onClick="{{goHome}}" aria-current="{{tabHome.current}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 0; background: transparent; color: {{tabHome.color}}; font-size: 12px; line-height: 16px; font-weight: {{tabHome.weight}}; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 L12 4 L20 10.5 V20 H14.5 V14.5 H9.5 V20 H4 Z"></path></svg>
+Home</button>
+<button type="button" class="sm-press" onClick="{{goInsights}}" aria-current="{{tabInsights.current}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 0; background: transparent; color: {{tabInsights.color}}; font-size: 12px; line-height: 16px; font-weight: {{tabInsights.weight}}; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15 L9 10 L13 13 L19 6.5"></path><path d="M14.5 6.5 H19 V11"></path><path d="M4 19.5 H20"></path></svg>
+Insights</button>
+<button type="button" class="sm-press" onClick="{{goProfile}}" aria-current="{{tabProfile.current}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 0; background: transparent; color: {{tabProfile.color}}; font-size: 12px; line-height: 16px; font-weight: {{tabProfile.weight}}; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20.5 C5 16.5 8 14.5 12 14.5 C16 14.5 19 16.5 19.5 20.5"></path></svg>
+Profile</button>
+</nav>
+</sc-if>
+
+<sc-if value="{{isBreak}}" hint-placeholder-val="{{ false }}">
+<div class="{{breakCls}}" style="position: absolute; inset: 0; box-sizing: border-box; padding: 44px 20px 28px; background: #ffffff; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; justify-content: space-between; height: 48px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.08em; color: #4f5854">{{breakLabel}}</p>
+<button type="button" class="sm-press" onClick="{{cancelBreak}}" aria-label="Stop the break and go back home" style="display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; margin-right: -12px; border: 0; border-radius: 12px; background: transparent; color: #121614; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18"></path></svg>
+</button>
+</div>
+<div style="align-self: center; position: relative; width: 210px; height: 210px; border-radius: 50%; overflow: hidden; margin-top: 4px">
+<div class="sm-breathe" style="position: absolute; inset: 0; border-radius: 50%; background: #e3f6ea"></div>
+<img class="sm-fade" src="assets/avatars/avatar-rest.webp" alt="Avatar resting with eyes closed" style="position: absolute; left: 50%; bottom: 0; width: 154px; height: 200px; margin-left: -77px; object-fit: contain; object-position: bottom">
+</div>
+<p style="margin: 10px 0 0; text-align: center; font-size: 14px; line-height: 20px; font-weight: 600; color: #06874c">{{breathLabel}}</p>
+<p style="margin: 8px 0 0; text-align: center; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 56px; line-height: 56px; font-weight: 600; letter-spacing: -0.035em; font-variant-numeric: tabular-nums">{{timer}}</p>
+<p style="margin: 6px 0 0; text-align: center; font-size: 15px; line-height: 22px; color: #4f5854">{{remainCaption}}</p>
+<div role="progressbar" aria-label="Break progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{progNow}}" style="margin-top: 16px; height: 4px; border-radius: 2px; background: #eef2ef; overflow: hidden">
+<div class="sm-bar" style="width: {{progPct}}; height: 4px; background: #06874c"></div>
+</div>
+<div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #e4e9e5; border-bottom: 1px solid #e4e9e5">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; line-height: 20px; font-weight: 600">{{hrTitle}}</span>
+<span style="font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">Live from your watch</span>
+</div>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; line-height: 20px">{{hrLive}} <span style="font-size: 11px; color: #4f5854">bpm</span></span>
+</div>
+<h2 style="margin: 22px 0 2px; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 20px; line-height: 24px; font-weight: 600; letter-spacing: -0.02em">Ideas for this break</h2>
+<ul style="list-style: none; margin: 0; padding: 0">
+<li style="display: flex; align-items: center; gap: 12px; min-height: 46px; border-bottom: 1px solid #e4e9e5; font-size: 15px; line-height: 22px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06874c" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"></circle><path d="M9 21 L11.5 14 L14.5 16.5 L15.5 21"></path><path d="M11.5 14 L12.5 8.5 L9 10.5 L7.5 13.5"></path><path d="M12.5 8.5 L15 11.5 L17.5 12"></path></svg>
+Walk outside, phone in your pocket</li>
+<li style="display: flex; align-items: center; gap: 12px; min-height: 46px; border-bottom: 1px solid #e4e9e5; font-size: 15px; line-height: 22px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06874c" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12 C7 8 9 8 12 12 C15 16 17 16 20 12"></path></svg>
+Follow the circle: 4 counts in, 6 out</li>
+<li style="display: flex; align-items: center; gap: 12px; min-height: 46px; border-bottom: 1px solid #e4e9e5; font-size: 15px; line-height: 22px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06874c" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9 H16 V15 C16 17.5 14 19.5 11.5 19.5 H9.5 C7 19.5 5 17.5 5 15 Z"></path><path d="M16 11 H18 C19.5 11 19.5 14 18 14 H16"></path><path d="M9 3.5 C8 5 10 5.5 9 7 M12.5 3.5 C11.5 5 13.5 5.5 12.5 7"></path></svg>
+Chai is good. Work talk can wait.</li>
+</ul>
+<button type="button" class="sm-press" onClick="{{endBreak}}" style="margin-top: auto; height: 48px; border-radius: 12px; border: 1.5px solid #8a948e; background: transparent; color: #121614; font-size: 15px; font-weight: 600; cursor: pointer">End break</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+<div class="{{doneCls}}" style="position: absolute; inset: 0; box-sizing: border-box; padding: 44px 20px 28px; background: #ffffff; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; justify-content: space-between; height: 48px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.08em; color: #4f5854">BREAK CHECK</p>
+<button type="button" class="sm-press" onClick="{{backToWork}}" aria-label="Close and go back home" style="display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; margin-right: -12px; border: 0; border-radius: 12px; background: transparent; color: #121614; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18"></path></svg>
+</button>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 4px">
+<span style="display: block; width: 150px; height: 150px; border-radius: 50%; overflow: hidden; background: #e3f6ea; position: relative">
+<img class="sm-fade" src="assets/avatars/avatar-steady.webp" alt="Avatar relaxing with a cup of chai" style="position: absolute; left: 50%; bottom: 0; width: 123px; height: 160px; margin-left: -61px; object-fit: contain; object-position: bottom">
+</span>
+<h1 class="sm-enter" style="margin: 18px 0 0; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 32px; line-height: 36px; font-weight: 600; letter-spacing: -0.03em">{{doneHead}}</h1>
+<p class="sm-enter" style="margin: 8px 0 0; max-width: 320px; font-size: 16px; line-height: 23px; animation-delay: 80ms">{{doneBody}}</p>
+</div>
+<div style="margin-top: 20px">
+<div style="display: flex; justify-content: space-between; padding-bottom: 8px">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.08em; color: #4f5854">SIGNAL</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.08em; color: #4f5854">BEFORE → AFTER</span>
+</div>
+<sc-for list="{{doneRows}}" as="r" hint-placeholder-count="3">
+<div class="sm-enter" style="display: flex; justify-content: space-between; align-items: center; min-height: 48px; border-top: 1px solid #e4e9e5; animation-delay: {{r.delay}}">
+<span style="font-size: 15px; font-weight: 600">{{r.label}}</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px">{{r.before}} → <span style="color: #06874c; font-weight: 500">{{r.after}}</span> <span style="font-size: 11px; color: #4f5854">{{r.unit}}</span></span>
+</div>
+</sc-for>
+<div style="border-top: 1px solid #e4e9e5"></div>
+</div>
+<fieldset style="margin: 20px 0 0; padding: 0; border: 0">
+<legend style="padding: 0; font-size: 15px; line-height: 22px; font-weight: 600">How do you feel?</legend>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px">
+<sc-for list="{{feelOpts}}" as="o" hint-placeholder-count="3">
+<button type="button" class="sm-press" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 48px; border-radius: 12px; border: 1.5px solid {{o.border}}; background: {{o.bg}}; color: #121614; font-size: 14px; font-weight: 600; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+</fieldset>
+<button type="button" class="sm-press" onClick="{{backToWork}}" style="margin-top: auto; height: 48px; border: 0; border-radius: 12px; background: #06874c; color: #ffffff; font-size: 15px; font-weight: 600; cursor: pointer">Back to work</button>
+</div>
+</sc-if>
+
+<sc-if value="{{toastA}}" hint-placeholder-val="{{ false }}">
+<div class="{{toastCls}}" role="status" style="position: absolute; left: 20px; right: 20px; bottom: 100px; padding: 14px 16px; border-radius: 12px; background: #121614; color: #ffffff; font-size: 14px; line-height: 20px; font-weight: 600; box-shadow: 0 8px 24px -6px rgba(18,22,20,0.3)">{{toastText}}</div>
+</sc-if>
+<sc-if value="{{toastB}}" hint-placeholder-val="{{ false }}">
+<div class="{{toastCls}}" role="status" style="position: absolute; left: 20px; right: 20px; bottom: 100px; padding: 14px 16px; border-radius: 12px; background: #121614; color: #ffffff; font-size: 14px; line-height: 20px; font-weight: 600; box-shadow: 0 8px 24px -6px rgba(18,22,20,0.3)">{{toastText}}</div>
+</sc-if>
+
+<sc-if value="{{sheetOn}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="{{scrimCls}}" onClick="{{closeSheet}}" aria-label="Close" style="position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: rgba(18,22,20,0.32); cursor: pointer"></button>
+<div class="{{sheetCls}}" role="dialog" aria-modal="true" aria-label="{{sheetTitle}}" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 10px 20px 32px; background: #ffffff; border-radius: 28px 28px 0 0; box-shadow: 0 -8px 24px -6px rgba(18,22,20,0.14); display: flex; flex-direction: column">
+<div style="align-self: center; width: 36px; height: 4px; border-radius: 2px; background: #e4e9e5"></div>
+
+<sc-if value="{{isSigSheet}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 18px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.08em; color: #4f5854">{{sig.eyebrow}}</p>
+<div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 28px; line-height: 32px; font-weight: 600; letter-spacing: -0.03em; color: {{sig.wordColor}}">{{sig.word}}</h2>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 20px; line-height: 24px">{{sig.value}} <span style="font-size: 13px; color: #4f5854">{{sig.unit}}</span></span>
+</div>
+<svg width="350" height="120" viewBox="0 0 350 120" role="img" aria-label="{{sig.chartAria}}" style="display: block; margin-top: 16px">
+<rect x="0" y="44" width="350" height="22" rx="4" fill="#eef2ef"></rect>
+<text x="346" y="59" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="#4f5854">YOUR USUAL</text>
+<path class="sm-draw" d="{{sig.d}}" fill="none" stroke="{{sig.stroke}}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"></path>
+<circle class="sm-fade" cx="{{sig.endX}}" cy="{{sig.endY}}" r="4" fill="{{sig.stroke}}"></circle>
+<text x="0" y="116" font-family="IBM Plex Mono, monospace" font-size="10" fill="#4f5854">09:00</text>
+<text x="338" y="116" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="#4f5854">NOW</text>
+</svg>
+<p style="margin: 14px 0 0; font-size: 15px; line-height: 22px">{{sig.about}}</p>
+<p style="margin: 8px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">Compared with your last 14 days. Guidance, not a medical reading.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{isWhySheet}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 18px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.08em; color: #4f5854">WHY YOU ARE</p>
+<h2 style="margin: 6px 0 0; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 28px; line-height: 32px; font-weight: 600; letter-spacing: -0.03em">{{whyTitle}}</h2>
+<ul style="list-style: none; margin: 14px 0 0; padding: 0">
+<sc-for list="{{whyReasons}}" as="w" hint-placeholder-count="3">
+<li class="sm-enter" style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid #e4e9e5; font-size: 15px; line-height: 22px; animation-delay: {{w.delay}}">
+<span style="flex: none; width: 8px; height: 8px; margin-top: 7px; border-radius: 50%; background: {{w.dot}}"></span>
+{{w.text}}</li>
+</sc-for>
+</ul>
+<p style="margin: 8px 0 0; font-size: 13px; line-height: 18px; font-weight: 500; color: #4f5854">Based on your watch, sleep and calendar. Guidance, not a medical reading.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{isOptSheet}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 18px" role="radiogroup" aria-label="{{sheetTitle}}">
+<h2 style="margin: 0 0 10px; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 24px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em">{{sheetTitle}}</h2>
+<sc-for list="{{optItems}}" as="o" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{o.checked}}" class="sm-press" onClick="{{o.pick}}" style="display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 52px; padding: 0; border: 0; border-top: 1px solid #e4e9e5; background: transparent; color: #121614; font-size: 15px; font-weight: {{o.weight}}; text-align: left; cursor: pointer">
+{{o.label}}
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06874c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity: {{o.opacity}}; transition: opacity 200ms ease"><path d="M5 12.5 L10 17.5 L19 7.5"></path></svg>
+</button>
+</sc-for>
+<div style="border-top: 1px solid #e4e9e5"></div>
+</div>
+</sc-if>
+
+<sc-if value="{{isInfoSheet}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 18px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 24px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em">{{sheetTitle}}</h2>
+<p style="margin: 10px 0 0; font-size: 15px; line-height: 22px">{{infoBody}}</p>
+<sc-if value="{{infoHasAction}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="sm-press" onClick="{{infoAction}}" style="margin-top: 18px; width: 100%; height: 48px; border-radius: 12px; border: 1.5px solid #c2364a; background: transparent; color: #c2364a; font-size: 15px; font-weight: 600; cursor: pointer">{{infoActionLabel}}</button>
+</sc-if>
+</div>
+</sc-if>
+
+<button type="button" class="sm-press" onClick="{{closeSheet}}" style="margin-top: 20px; height: 48px; border-radius: 12px; border: 0; background: #06874c; color: #ffffff; font-size: 15px; font-weight: 600; cursor: pointer">Done</button>
+</div>
+</sc-if>
+
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 47px; box-sizing: border-box; padding: 4px 28px 0 36px; display: flex; align-items: center; justify-content: space-between; z-index: 5; pointer-events: none; color: #121614; font-family: -apple-system, 'SF Pro Text', 'Hanken Grotesk', sans-serif; font-size: 16px; font-weight: 600; letter-spacing: -0.01em">
+<span style="font-variant-numeric: tabular-nums">{{clock}}</span>
+<span style="display: flex; align-items: center; gap: 6px">
+<svg width="18" height="12" viewBox="0 0 18 12" fill="#121614"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg>
+<svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="#121614" stroke-width="1.8" stroke-linecap="round"><path d="M1.5 4.2 C5 1 11 1 14.5 4.2"></path><path d="M4 7 C6.3 5 9.7 5 12 7"></path><circle cx="8" cy="10" r="1.2" fill="#121614" stroke="none"></circle></svg>
+<svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0.5" y="0.5" width="23" height="12" rx="3.5" stroke="#121614" stroke-opacity="0.4"></rect><rect x="2" y="2" width="17" height="9" rx="2" fill="#121614"></rect><path d="M25 4.5 V8.5" stroke="#121614" stroke-opacity="0.4" stroke-width="1.6" stroke-linecap="round"></path></svg>
+</span>
+</div>
+
+</div>
+</template>
+
+<script>
+/* Preact 10.24.3, MIT licence, https://preactjs.com */
+!function(n){"function"==typeof define&&define.amd?define(n):n()}(function(){var n,l,t,u,i,o,e,r,f,c,s,a,h,p=65536,v=1<<17,d={},y=[],w=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|itera/i,_=Array.isArray;function g(n,l){for(var t in l)n[t]=l[t];return n}function m(n){n&&n.parentNode&&n.parentNode.removeChild(n)}function b(l,t,u){var i,o,e,r={};for(e in t)"key"==e?i=t[e]:"ref"==e?o=t[e]:r[e]=t[e];if(arguments.length>2&&(r.children=arguments.length>3?n.call(arguments,2):u),"function"==typeof l&&null!=l.defaultProps)for(e in l.defaultProps)void 0===r[e]&&(r[e]=l.defaultProps[e]);return k(l,r,i,o,null)}function k(n,u,i,o,e){var r={type:n,props:u,key:i,ref:o,__k:null,__:null,__b:0,__e:null,__d:void 0,__c:null,constructor:void 0,__v:null==e?++t:e,__i:-1,__u:0};return null==e&&null!=l.vnode&&l.vnode(r),r}function C(n){return n.children}function x(n,l){this.props=n,this.context=l}function S(n,l){if(null==l)return n.__?S(n.__,n.__i+1):null;for(var t;l<n.__k.length;l++)if(null!=(t=n.__k[l])&&null!=t.__e)return t.__e;return"function"==typeof n.type?S(n):null}function M(n){var l,t;if(null!=(n=n.__)&&null!=n.__c){for(n.__e=n.__c.base=null,l=0;l<n.__k.length;l++)if(null!=(t=n.__k[l])&&null!=t.__e){n.__e=n.__c.base=t.__e;break}return M(n)}}function P(n){(!n.__d&&(n.__d=!0)&&i.push(n)&&!$.__r++||o!==l.debounceRendering)&&((o=l.debounceRendering)||e)($)}function $(){var n,t,u,o,e,f,c,s;for(i.sort(r);n=i.shift();)n.__d&&(t=i.length,o=void 0,f=(e=(u=n).__v).__e,c=[],s=[],u.__P&&((o=g({},e)).__v=e.__v+1,l.vnode&&l.vnode(o),O(u.__P,o,e,u.__n,u.__P.namespaceURI,32&e.__u?[f]:null,c,null==f?S(e):f,!!(32&e.__u),s),o.__v=e.__v,o.__.__k[o.__i]=o,V(c,o,s),o.__e!=f&&M(o)),i.length>t&&i.sort(r));$.__r=0}function I(n,l,t,u,i,o,e,r,f,c,s){var a,h,v,w,_,g=u&&u.__k||y,m=l.length;for(t.__d=f,A(t,l,g),f=t.__d,a=0;a<m;a++)null!=(v=t.__k[a])&&(h=-1===v.__i?d:g[v.__i]||d,v.__i=a,O(n,v,h,i,o,e,r,f,c,s),w=v.__e,v.ref&&h.ref!=v.ref&&(h.ref&&z(h.ref,null,v),s.push(v.ref,v.__c||w,v)),null==_&&null!=w&&(_=w),v.__u&p||h.__k===v.__k?f=E(v,f,n):"function"==typeof v.type&&void 0!==v.__d?f=v.__d:w&&(f=w.nextSibling),v.__d=void 0,v.__u&=-196609);t.__d=f,t.__e=_}function A(n,l,t){var u,i,o,e,r,f=l.length,c=t.length,s=c,a=0;for(n.__k=[],u=0;u<f;u++)null!=(i=l[u])&&"boolean"!=typeof i&&"function"!=typeof i?(e=u+a,(i=n.__k[u]="string"==typeof i||"number"==typeof i||"bigint"==typeof i||i.constructor==String?k(null,i,null,null,null):_(i)?k(C,{children:i},null,null,null):void 0===i.constructor&&i.__b>0?k(i.type,i.props,i.key,i.ref?i.ref:null,i.__v):i).__=n,i.__b=n.__b+1,o=null,-1!==(r=i.__i=F(i,t,e,s))&&(s--,(o=t[r])&&(o.__u|=v)),null==o||null===o.__v?(-1==r&&a--,"function"!=typeof i.type&&(i.__u|=p)):r!==e&&(r==e-1?a--:r==e+1?a++:(r>e?a--:a++,i.__u|=p))):i=n.__k[u]=null;if(s)for(u=0;u<c;u++)null!=(o=t[u])&&0==(o.__u&v)&&(o.__e==n.__d&&(n.__d=S(o)),N(o,o))}function E(n,l,t){var u,i;if("function"==typeof n.type){for(u=n.__k,i=0;u&&i<u.length;i++)u[i]&&(u[i].__=n,l=E(u[i],l,t));return l}n.__e!=l&&(l&&n.type&&!t.contains(l)&&(l=S(n)),t.insertBefore(n.__e,l||null),l=n.__e);do{l=l&&l.nextSibling}while(null!=l&&8===l.nodeType);return l}function F(n,l,t,u){var i=n.key,o=n.type,e=t-1,r=t+1,f=l[t];if(null===f||f&&i==f.key&&o===f.type&&0==(f.__u&v))return t;if(u>(null!=f&&0==(f.__u&v)?1:0))for(;e>=0||r<l.length;){if(e>=0){if((f=l[e])&&0==(f.__u&v)&&i==f.key&&o===f.type)return e;e--}if(r<l.length){if((f=l[r])&&0==(f.__u&v)&&i==f.key&&o===f.type)return r;r++}}return-1}function H(n,l,t){"-"===l[0]?n.setProperty(l,null==t?"":t):n[l]=null==t?"":"number"!=typeof t||w.test(l)?t:t+"px"}function L(n,l,t,u,i){var o;n:if("style"===l)if("string"==typeof t)n.style.cssText=t;else{if("string"==typeof u&&(n.style.cssText=u=""),u)for(l in u)t&&l in t||H(n.style,l,"");if(t)for(l in t)u&&t[l]===u[l]||H(n.style,l,t[l])}else if("o"===l[0]&&"n"===l[1])o=l!==(l=l.replace(/(PointerCapture)$|Capture$/i,"$1")),l=l.toLowerCase()in n||"onFocusOut"===l||"onFocusIn"===l?l.toLowerCase().slice(2):l.slice(2),n.l||(n.l={}),n.l[l+o]=t,t?u?t.t=u.t:(t.t=f,n.addEventListener(l,o?s:c,o)):n.removeEventListener(l,o?s:c,o);else{if("http://www.w3.org/2000/svg"==i)l=l.replace(/xlink(H|:h)/,"h").replace(/sName$/,"s");else if("width"!=l&&"height"!=l&&"href"!=l&&"list"!=l&&"form"!=l&&"tabIndex"!=l&&"download"!=l&&"rowSpan"!=l&&"colSpan"!=l&&"role"!=l&&"popover"!=l&&l in n)try{n[l]=null==t?"":t;break n}catch(n){}"function"==typeof t||(null==t||!1===t&&"-"!==l[4]?n.removeAttribute(l):n.setAttribute(l,"popover"==l&&1==t?"":t))}}function T(n){return function(t){if(this.l){var u=this.l[t.type+n];if(null==t.u)t.u=f++;else if(t.u<u.t)return;return u(l.event?l.event(t):t)}}}function O(n,t,u,i,o,e,r,f,c,s){var a,h,p,v,d,y,w,m,b,k,S,M,P,$,A,E,F=t.type;if(void 0!==t.constructor)return null;128&u.__u&&(c=!!(32&u.__u),e=[f=t.__e=u.__e]),(a=l.__b)&&a(t);n:if("function"==typeof F)try{if(m=t.props,b="prototype"in F&&F.prototype.render,k=(a=F.contextType)&&i[a.__c],S=a?k?k.props.value:a.__:i,u.__c?w=(h=t.__c=u.__c).__=h.__E:(b?t.__c=h=new F(m,S):(t.__c=h=new x(m,S),h.constructor=F,h.render=R),k&&k.sub(h),h.props=m,h.state||(h.state={}),h.context=S,h.__n=i,p=h.__d=!0,h.__h=[],h._sb=[]),b&&null==h.__s&&(h.__s=h.state),b&&null!=F.getDerivedStateFromProps&&(h.__s==h.state&&(h.__s=g({},h.__s)),g(h.__s,F.getDerivedStateFromProps(m,h.__s))),v=h.props,d=h.state,h.__v=t,p)b&&null==F.getDerivedStateFromProps&&null!=h.componentWillMount&&h.componentWillMount(),b&&null!=h.componentDidMount&&h.__h.push(h.componentDidMount);else{if(b&&null==F.getDerivedStateFromProps&&m!==v&&null!=h.componentWillReceiveProps&&h.componentWillReceiveProps(m,S),!h.__e&&(null!=h.shouldComponentUpdate&&!1===h.shouldComponentUpdate(m,h.__s,S)||t.__v===u.__v)){for(t.__v!==u.__v&&(h.props=m,h.state=h.__s,h.__d=!1),t.__e=u.__e,t.__k=u.__k,t.__k.some(function(n){n&&(n.__=t)}),M=0;M<h._sb.length;M++)h.__h.push(h._sb[M]);h._sb=[],h.__h.length&&r.push(h);break n}null!=h.componentWillUpdate&&h.componentWillUpdate(m,h.__s,S),b&&null!=h.componentDidUpdate&&h.__h.push(function(){h.componentDidUpdate(v,d,y)})}if(h.context=S,h.props=m,h.__P=n,h.__e=!1,P=l.__r,$=0,b){for(h.state=h.__s,h.__d=!1,P&&P(t),a=h.render(h.props,h.state,h.context),A=0;A<h._sb.length;A++)h.__h.push(h._sb[A]);h._sb=[]}else do{h.__d=!1,P&&P(t),a=h.render(h.props,h.state,h.context),h.state=h.__s}while(h.__d&&++$<25);h.state=h.__s,null!=h.getChildContext&&(i=g(g({},i),h.getChildContext())),b&&!p&&null!=h.getSnapshotBeforeUpdate&&(y=h.getSnapshotBeforeUpdate(v,d)),I(n,_(E=null!=a&&a.type===C&&null==a.key?a.props.children:a)?E:[E],t,u,i,o,e,r,f,c,s),h.base=t.__e,t.__u&=-161,h.__h.length&&r.push(h),w&&(h.__E=h.__=null)}catch(n){if(t.__v=null,c||null!=e){for(t.__u|=c?160:128;f&&8===f.nodeType&&f.nextSibling;)f=f.nextSibling;e[e.indexOf(f)]=null,t.__e=f}else t.__e=u.__e,t.__k=u.__k;l.__e(n,t,u)}else null==e&&t.__v===u.__v?(t.__k=u.__k,t.__e=u.__e):t.__e=j(u.__e,t,u,i,o,e,r,c,s);(a=l.diffed)&&a(t)}function V(n,t,u){t.__d=void 0;for(var i=0;i<u.length;i++)z(u[i],u[++i],u[++i]);l.__c&&l.__c(t,n),n.some(function(t){try{n=t.__h,t.__h=[],n.some(function(n){n.call(t)})}catch(n){l.__e(n,t.__v)}})}function j(t,u,i,o,e,r,f,c,s){var a,h,p,v,y,w,g,b=i.props,k=u.props,C=u.type;if("svg"===C?e="http://www.w3.org/2000/svg":"math"===C?e="http://www.w3.org/1998/Math/MathML":e||(e="http://www.w3.org/1999/xhtml"),null!=r)for(a=0;a<r.length;a++)if((y=r[a])&&"setAttribute"in y==!!C&&(C?y.localName===C:3===y.nodeType)){t=y,r[a]=null;break}if(null==t){if(null===C)return document.createTextNode(k);t=document.createElementNS(e,C,k.is&&k),c&&(l.__m&&l.__m(u,r),c=!1),r=null}if(null===C)b===k||c&&t.data===k||(t.data=k);else{if(r=r&&n.call(t.childNodes),b=i.props||d,!c&&null!=r)for(b={},a=0;a<t.attributes.length;a++)b[(y=t.attributes[a]).name]=y.value;for(a in b)if(y=b[a],"children"==a);else if("dangerouslySetInnerHTML"==a)p=y;else if(!(a in k)){if("value"==a&&"defaultValue"in k||"checked"==a&&"defaultChecked"in k)continue;L(t,a,null,y,e)}for(a in k)y=k[a],"children"==a?v=y:"dangerouslySetInnerHTML"==a?h=y:"value"==a?w=y:"checked"==a?g=y:c&&"function"!=typeof y||b[a]===y||L(t,a,y,b[a],e);if(h)c||p&&(h.__html===p.__html||h.__html===t.innerHTML)||(t.innerHTML=h.__html),u.__k=[];else if(p&&(t.innerHTML=""),I(t,_(v)?v:[v],u,i,o,"foreignObject"===C?"http://www.w3.org/1999/xhtml":e,r,f,r?r[0]:i.__k&&S(i,0),c,s),null!=r)for(a=r.length;a--;)m(r[a]);c||(a="value","progress"===C&&null==w?t.removeAttribute("value"):void 0!==w&&(w!==t[a]||"progress"===C&&!w||"option"===C&&w!==b[a])&&L(t,a,w,b[a],e),a="checked",void 0!==g&&g!==t[a]&&L(t,a,g,b[a],e))}return t}function z(n,t,u){try{if("function"==typeof n){var i="function"==typeof n.__u;i&&n.__u(),i&&null==t||(n.__u=n(t))}else n.current=t}catch(n){l.__e(n,u)}}function N(n,t,u){var i,o;if(l.unmount&&l.unmount(n),(i=n.ref)&&(i.current&&i.current!==n.__e||z(i,null,t)),null!=(i=n.__c)){if(i.componentWillUnmount)try{i.componentWillUnmount()}catch(n){l.__e(n,t)}i.base=i.__P=null}if(i=n.__k)for(o=0;o<i.length;o++)i[o]&&N(i[o],t,u||"function"!=typeof n.type);u||m(n.__e),n.__c=n.__=n.__e=n.__d=void 0}function R(n,l,t){return this.constructor(n,t)}function q(t,u,i){var o,e,r,f;l.__&&l.__(t,u),e=(o="function"==typeof i)?null:i&&i.__k||u.__k,r=[],f=[],O(u,t=(!o&&i||u).__k=b(C,null,[t]),e||d,d,u.namespaceURI,!o&&i?[i]:e?null:u.firstChild?n.call(u.childNodes):null,r,!o&&i?i:e?e.__e:u.firstChild,o,f),V(r,t,f)}n=y.slice,l={__e:function(n,l,t,u){for(var i,o,e;l=l.__;)if((i=l.__c)&&!i.__)try{if((o=i.constructor)&&null!=o.getDerivedStateFromError&&(i.setState(o.getDerivedStateFromError(n)),e=i.__d),null!=i.componentDidCatch&&(i.componentDidCatch(n,u||{}),e=i.__d),e)return i.__E=i}catch(l){n=l}throw n}},t=0,u=function(n){return null!=n&&null==n.constructor},x.prototype.setState=function(n,l){var t;t=null!=this.__s&&this.__s!==this.state?this.__s:this.__s=g({},this.state),"function"==typeof n&&(n=n(g({},t),this.props)),n&&g(t,n),null!=n&&this.__v&&(l&&this._sb.push(l),P(this))},x.prototype.forceUpdate=function(n){this.__v&&(this.__e=!0,n&&this.__h.push(n),P(this))},x.prototype.render=C,i=[],e="function"==typeof Promise?Promise.prototype.then.bind(Promise.resolve()):setTimeout,r=function(n,l){return n.__v.__b-l.__v.__b},$.__r=0,f=0,c=T(!1),s=T(!0),a=0,h={__proto__:null,render:q,hydrate:function n(l,t){q(l,t,n)},createElement:b,h:b,Fragment:C,createRef:function(){return{current:null}},isValidElement:u,Component:x,cloneElement:function(l,t,u){var i,o,e,r,f=g({},l.props);for(e in l.type&&l.type.defaultProps&&(r=l.type.defaultProps),t)"key"==e?i=t[e]:"ref"==e?o=t[e]:f[e]=void 0===t[e]&&void 0!==r?r[e]:t[e];return arguments.length>2&&(f.children=arguments.length>3?n.call(arguments,2):u),k(l.type,f,i||l.key,o||l.ref,null)},createContext:function(n,l){var t={__c:l="__cC"+a++,__:n,Consumer:function(n,l){return n.children(l)},Provider:function(n){var t,u;return this.getChildContext||(t=new Set,(u={})[l]=this,this.getChildContext=function(){return u},this.componentWillUnmount=function(){t=null},this.shouldComponentUpdate=function(n){this.props.value!==n.value&&t.forEach(function(n){n.__e=!0,P(n)})},this.sub=function(n){t.add(n);var l=n.componentWillUnmount;n.componentWillUnmount=function(){t&&t.delete(n),l&&l.call(n)}}),n.children}};return t.Provider.__=t.Consumer.contextType=t},toChildArray:function n(l,t){return t=t||[],null==l||"boolean"==typeof l||(_(l)?l.some(function(l){n(l,t)}):t.push(l)),t},options:l},typeof module<"u"?module.exports=h:self.preact=h});
+//# sourceMappingURL=preact.min.umd.js.map
+
+</script>
+<script>
+/*
+ * Tiny template runtime for Stress Meter.
+ * Renders the markup in <template id="app-template"> with Preact.
+ * Supports {{path}} holes, <sc-if value="{{x}}">, <sc-for list="{{xs}}" as="item">
+ * and onClick="{{handler}}" style event bindings.
+ */
+(function () {
+  var h = preact.h;
+
+  var HOLE_FULL = /^\s*\{\{\s*([^}]+?)\s*\}\}\s*$/;
+  var HOLE_ANY = /\{\{\s*([^}]+?)\s*\}\}/g;
+
+  // Attribute names the HTML parser lowercases that Preact needs in camelCase.
+  var EVENT_NAMES = { onclick: 'onClick', onchange: 'onChange', oninput: 'onInput' };
+  var SKIP_ATTRS = { 'hint-placeholder-val': 1, 'hint-placeholder-count': 1, 'hint-size': 1 };
+
+  function lookup(path, scope) {
+    if (path === 'true') return true;
+    if (path === 'false') return false;
+    if (path === 'null') return null;
+    if (/^-?\d+(\.\d+)?$/.test(path)) return Number(path);
+    var parts = path.split('.');
+    var cur = scope;
+    for (var i = 0; i < parts.length; i++) {
+      if (cur == null) return undefined;
+      cur = cur[parts[i]];
+    }
+    return cur;
+  }
+
+  function interpolate(str, scope) {
+    return str.replace(HOLE_ANY, function (_, p) {
+      var v = lookup(p, scope);
+      return v == null ? '' : String(v);
+    });
+  }
+
+  function attrValue(raw, scope) {
+    var m = raw.match(HOLE_FULL);
+    if (m) return lookup(m[1], scope);
+    if (raw.indexOf('{{') >= 0) return interpolate(raw, scope);
+    return raw;
+  }
+
+  function child(scope, extra) {
+    var s = Object.create(scope);
+    for (var k in extra) s[k] = extra[k];
+    return s;
+  }
+
+  function renderNodes(nodes, scope, keyPrefix) {
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var r = renderNode(nodes[i], scope, keyPrefix + '.' + i);
+      if (r == null) continue;
+      if (Array.isArray(r)) { for (var j = 0; j < r.length; j++) out.push(r[j]); }
+      else out.push(r);
+    }
+    return out;
+  }
+
+  function renderNode(node, scope, key) {
+    if (node.nodeType === 3) {
+      var t = node.nodeValue;
+      if (!t.trim()) return t.indexOf('\n') >= 0 ? null : t;
+      return t.indexOf('{{') >= 0 ? interpolate(t, scope) : t;
+    }
+    if (node.nodeType !== 1) return null;
+    var tag = node.localName;
+
+    if (tag === 'sc-if') {
+      var cond = attrValue(node.getAttribute('value') || '', scope);
+      return cond ? renderNodes(node.childNodes, scope, key) : null;
+    }
+    if (tag === 'sc-for') {
+      var list = attrValue(node.getAttribute('list') || '', scope) || [];
+      var as = node.getAttribute('as') || 'item';
+      var items = [];
+      for (var i = 0; i < list.length; i++) {
+        var extra = { $index: i };
+        extra[as] = list[i];
+        var kids = renderNodes(node.childNodes, child(scope, extra), key + '#' + i);
+        for (var j = 0; j < kids.length; j++) items.push(kids[j]);
+      }
+      return items;
+    }
+
+    var props = { key: key };
+    var attrs = node.attributes;
+    for (var a = 0; a < attrs.length; a++) {
+      var name = attrs[a].name;
+      if (SKIP_ATTRS[name]) continue;
+      var val = attrValue(attrs[a].value, scope);
+      if (EVENT_NAMES[name]) { props[EVENT_NAMES[name]] = val; continue; }
+      if (name === 'class') { props['class'] = val; continue; }
+      props[name] = val;
+    }
+    var source = tag === 'template' ? node.content.childNodes : node.childNodes;
+    return h(tag, props, renderNodes(source, scope, key));
+  }
+
+  var parsedRoot = null;
+  function templateRoot() {
+    if (!parsedRoot) {
+      var tpl = document.getElementById('app-template');
+      parsedRoot = tpl.content;
+    }
+    return parsedRoot;
+  }
+
+  // Base class the app's Component extends.
+  class DCLogic extends preact.Component {
+    render() {
+      var vals = this.renderVals() || {};
+      var nodes = renderNodes(templateRoot().childNodes, vals, 'r');
+      return nodes.length === 1 ? nodes[0] : h(preact.Fragment, null, nodes);
+    }
+  }
+
+  window.DCLogic = DCLogic;
+  window.mountApp = function (Component, props, el) {
+    preact.render(h(Component, props), el);
+  };
+})();
+
+</script>
+<script>
+class Component extends DCLogic {
+  constructor() {
+    super(...arguments);
+    var P = this.props || {};
+    var DF = this.defaults();
+    var st0 = P.startScreen || DF.startScreen;
+    this.state = {
+      tab: P.startTab || DF.startTab, screen: st0, moodOverride: null, afterBreak: false,
+      snoozed: false, snoozeText: '', sheet: null, sheetClosing: false, sigIndex: 0,
+      optKey: null, info: null, toast: null, toastSlot: 0,
+      breakTotal: 600, elapsed: st0 === 'done' ? 600 : 0, real: 0, startMood: P.mood || DF.mood, p: st0 === 'done' ? 1 : 0, feel: null,
+      day: 6, extraBreak: 0, leaving: null, tabDir: null, modalClosing: false, toastOut: false,
+      settings: { breakLen: '10 min', nudges: 'Up to 4 a day', hours: '10:00 to 19:00', days: 'Mon to Fri', quiet: '22:00 to 07:00' }
+    };
+  }
+
+  componentDidMount() {
+    var self = this;
+    this._iv = setInterval(function () { self.tick(); }, 250);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._iv);
+    clearTimeout(this._tt);
+    clearTimeout(this._st);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps && prevProps.mood !== this.props.mood) {
+      this.setState({ moodOverride: null, afterBreak: false, snoozed: false, clock: null });
+    }
+  }
+
+  tick() {
+    var s = this.state;
+    if (s.screen !== 'break') return;
+    var speed = parseInt(this.props.demoSpeed || '30x', 10) || 30;
+    var el = s.elapsed + 0.25 * speed;
+    if (el >= s.breakTotal) {
+      this.setState({ elapsed: s.breakTotal, screen: 'done', p: 1 });
+      return;
+    }
+    this.setState({ elapsed: el, real: s.real + 0.25 });
+  }
+
+  defaults() {
+    return { mood: 'stretched', startTab: 'home', startScreen: 'tabs' };
+  }
+
+  mood() {
+    return this.state.moodOverride || this.props.mood || this.defaults().mood;
+  }
+
+  showToast(text) {
+    var self = this;
+    clearTimeout(this._tt);
+    clearTimeout(this._tt2);
+    this.setState({ toast: text, toastOut: false, toastSlot: this.state.toastSlot ? 0 : 1 });
+    this._tt = setTimeout(function () { self.setState({ toastOut: true }); }, 2600);
+    this._tt2 = setTimeout(function () { self.setState({ toast: null, toastOut: false }); }, 2830);
+  }
+
+  goTab(t) {
+    var self = this;
+    var o = this.state.tab;
+    if (t === o) return;
+    var IDX = { home: 0, insights: 1, profile: 2 };
+    clearTimeout(this._lt);
+    this.setState({ tab: t, leaving: o, tabDir: IDX[t] > IDX[o] ? 'fwd' : 'back', sheet: null, sheetClosing: false });
+    this._lt = setTimeout(function () { self.setState({ leaving: null }); }, 260);
+  }
+
+  closeModal(patch, toast) {
+    var self = this;
+    if (this.state.modalClosing) return;
+    this.setState({ modalClosing: true });
+    setTimeout(function () {
+      patch.modalClosing = false;
+      self.setState(patch);
+      if (toast) self.showToast(toast);
+    }, 250);
+  }
+
+  openSheet(patch) {
+    clearTimeout(this._st);
+    var next = { sheetClosing: false };
+    for (var k in patch) next[k] = patch[k];
+    this.setState(next);
+  }
+
+  closeSheet() {
+    var self = this;
+    if (!this.state.sheet || this.state.sheetClosing) return;
+    this.setState({ sheetClosing: true });
+    this._st = setTimeout(function () { self.setState({ sheet: null, sheetClosing: false }); }, 200);
+  }
+
+  startBreak(min) {
+    this.setState({ screen: 'break', breakTotal: min * 60, elapsed: 0, real: 0, startMood: this.mood(), feel: null, sheet: null });
+  }
+
+  onCta(k) {
+    var s = this.state;
+    if (k === 'after') {
+      this.setState({ snoozed: true, snoozeText: "All good. I'll check in again in about two hours." });
+    } else if (k === 'busy') {
+      this.startBreak(5);
+    } else if (k === 'stretched') {
+      this.startBreak(parseInt(s.settings.breakLen, 10) || 10);
+    } else if (k === 'steady') {
+      this.showToast("Reminder set for 16:00.");
+    } else if (k === 'recharged') {
+      this.showToast("Focus block set until 17:10. Nudges are paused.");
+    } else {
+      this.showToast("Done. I'll nudge you at 18:45 to start wrapping up.");
+    }
+  }
+
+  getData() {
+    if (this._d) return this._d;
+    this._d = {
+      KEYS: ['recharged', 'steady', 'busy', 'stretched', 'pause'],
+      STATECOL: { recharged: '#8a6100', steady: '#06703f', busy: '#7a5726', stretched: '#a8480a', pause: '#2a5aa3' },
+      TIME: { recharged: '09:10', steady: '13:20', busy: '15:10', stretched: '17:40', pause: '18:20' },
+      HERO: { recharged: '#ffe27a', steady: '#bdefd0', busy: '#f3e3c3', stretched: '#ffcfa3', pause: '#c9dcf7' },
+      MOODS: {
+        recharged: { name: 'Recharged', sub: 'You slept well and recovered overnight.', head: 'Good day for your hardest task.', body: 'You are fresh right now. Put the deep work before lunch.', cta: 'Block 90 min for focus' },
+        steady: { name: 'Steady', sub: 'Your rhythm has been even today.', head: 'Nice pace. Keep the breaks coming.', body: 'Two breaks since 10:00. One short walk before 16:00 keeps this going.', cta: 'Remind me at 16:00' },
+        busy: { name: 'Busy', sub: 'Your body is keeping up with a full day.', head: 'Two hours straight at the desk.', body: 'Stand up, refill your water and look at something far away.', cta: 'Take 5 minutes' },
+        stretched: { name: 'Stretched', sub: 'You have been carrying a lot since morning.', head: 'Long stretch, dude. Take a real break.', body: '', cta: '' },
+        pause: { name: 'Needs a pause', sub: 'Your body has been working hard all week.', head: 'Third late night this week.', body: 'Log off by 19:00 tonight. The work will still be there tomorrow.', cta: 'Log off at 19:00' }
+      },
+      AFTER: { head: 'That break worked.', body: "Your heart rate is back near your usual. I'll check in again in about two hours.", cta: 'Got it' },
+      SIG: {
+        recharged: [['Heart rate', '62', 'bpm', 'Calm', -0.15, false], ['HRV', '61', 'ms', 'Strong', 0.22, false], ['Breathing', '13', '/min', 'Calm', -0.12, false], ['Skin temp', '+0.1', '°C', 'Usual', 0.02, false]],
+        steady: [['Heart rate', '70', 'bpm', 'Usual', 0, false], ['HRV', '52', 'ms', 'Usual', 0, false], ['Breathing', '15', '/min', 'Usual', 0, false], ['Skin temp', '+0.1', '°C', 'Usual', 0, false]],
+        busy: [['Heart rate', '77', 'bpm', 'A little up', 0.18, true], ['HRV', '48', 'ms', 'Usual', -0.05, false], ['Breathing', '16', '/min', 'Usual', 0.08, false], ['Skin temp', '+0.2', '°C', 'Usual', 0.05, false]],
+        stretched: [['Heart rate', '86', 'bpm', 'Elevated', 0.35, true], ['HRV', '38', 'ms', 'Lower', -0.3, true], ['Breathing', '19', '/min', 'Elevated', 0.3, true], ['Skin temp', '+0.4', '°C', 'Warmer', 0.22, true]],
+        pause: [['Heart rate', '84', 'bpm', 'Elevated', 0.32, true], ['HRV', '34', 'ms', 'Low for you', -0.35, true], ['Breathing', '18', '/min', 'A little up', 0.2, true], ['Skin temp', '+0.6', '°C', 'Warmer', 0.3, true]]
+      },
+      SIGFULL: ['HEART RATE', 'HEART RATE VARIABILITY', 'BREATHING', 'SKIN TEMPERATURE'],
+      ABOUT: [
+        'Beats per minute while you are sitting still. It runs higher when your body is working hard, and settles after real rest.',
+        'The tiny variation between heartbeats. Higher usually means your body has recovered. Lower means it is still working.',
+        'Breaths per minute. Fast, shallow breathing often shows up before you notice any tension.',
+        'Change from your usual skin temperature. A small rise can come with short sleep or a long, demanding day.'
+      ],
+      WHY: {
+        recharged: ['You slept 7h 50m, more than usual', 'Heart rate variability is above your usual', 'Resting heart rate is calm'],
+        steady: ['All signals are inside your usual range', 'Two breaks since 10:00', 'You slept about as long as usual'],
+        busy: ['Two hours at the desk without a break', 'Heart rate is a little above usual', 'Skin response is a little up'],
+        stretched: ['No real break since 11:00', 'Heart rate and breathing are elevated', 'Heart rate variability is lower than usual', 'You slept 6h 05m last night'],
+        pause: ['52 hours of work this week, above your usual', 'Three late nights in a row', 'Heart rate variability low for you for 3 days']
+      },
+      WEEK: [
+        ['M', 'steady', 'Monday', 'Even day. Two walks and lunch away from the desk.'],
+        ['T', 'busy', 'Tuesday', 'Back-to-back calls from 14:00. You took one short break.'],
+        ['W', 'stretched', 'Wednesday', 'Meetings until 20:30 and under 6 hours of sleep.'],
+        ['T', 'stretched', 'Thursday', 'No real break between 11:00 and 17:00.'],
+        ['F', 'pause', 'Friday', 'Third late night of the week. Your body asked for rest.'],
+        ['S', 'steady', 'Saturday', 'Slept in and went for a long walk.'],
+        ['S', 'recharged', 'Sunday', 'Best sleep of the week, 8h 10m.']
+      ],
+      OPTS: {
+        breakLen: { title: 'Break length', options: ['5 min', '10 min', '15 min'] },
+        nudges: { title: 'Nudges', options: ['Up to 2 a day', 'Up to 4 a day', 'Up to 6 a day', 'Only when stretched'] },
+        hours: { title: 'Working hours', options: ['09:00 to 18:00', '10:00 to 19:00', '11:00 to 20:00'] },
+        days: { title: 'Working days', options: ['Mon to Fri', 'Mon to Sat', 'Sun to Thu'] },
+        quiet: { title: 'Quiet hours', options: ['21:00 to 07:00', '22:00 to 07:00', '23:00 to 08:00'] }
+      },
+      INFO: {
+        watch: { title: 'Apple Watch', body: 'Connected. Last synced 4 min ago. Heart rate, HRV, breathing, skin response and temperature come from your watch.' },
+        health: { title: 'Apple Health', body: 'Sleep and workouts are read from Apple Health. Nothing is written back.' },
+        calendar: { title: 'Calendar', body: 'Only meeting start and end times are read. Never titles, notes or people.' },
+        data: { title: 'Where your data lives', body: 'Your signals are processed on this phone. Nothing leaves it unless you export it.' },
+        del: { title: 'Delete my data', body: 'This removes every signal, insight and setting from this phone. It cannot be undone.', action: 'Delete my data', toast: 'Your data has been deleted from this phone.' }
+      }
+    };
+    return this._d;
+  }
+
+  spark(level, w, h, pad) {
+    var wiggle = [0, 0.05, -0.04, 0.06, -0.03, 0.04, -0.05, 0.03, 0.06, -0.02, 0.04, 0];
+    var pts = wiggle.map(function (wg, i) {
+      var v = 0.5 + wg + level * (i / 11);
+      var y = h - pad - v * (h - pad * 2);
+      if (y < pad) y = pad;
+      if (y > h - pad) y = h - pad;
+      return { x: pad + i * ((w - pad * 2) / 11), y: y };
+    });
+    var d = pts.map(function (p, i) { return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' ');
+    var last = pts[pts.length - 1];
+    return { d: d, endX: last.x.toFixed(1), endY: last.y.toFixed(1) };
+  }
+
+  renderVals() {
+    var self = this;
+    var S = this.state;
+    var D = this.getData();
+    var mood = this.mood();
+    if (D.KEYS.indexOf(mood) < 0) mood = 'stretched';
+    var m = D.MOODS[mood];
+    var breakMin = parseInt(S.settings.breakLen, 10) || 10;
+    var clock = S.clock || D.TIME[mood];
+    var hour = parseInt(clock.split(':')[0], 10);
+    var greeting = hour < 12 ? 'Good morning' : (hour < 17 ? 'Good afternoon' : 'Good evening');
+
+    var isMood = {};
+    D.KEYS.forEach(function (k) { isMood[k] = k === mood; });
+    var heroes = D.KEYS.map(function (k) {
+      return { show: k === mood, name: D.MOODS[k].name, sub: D.MOODS[k].sub, color: D.STATECOL[k] };
+    });
+
+    var advKey = S.afterBreak ? 'after' : mood;
+    var advs = D.KEYS.concat(['after']).map(function (k) {
+      var a = k === 'after' ? D.AFTER : D.MOODS[k];
+      var body = a.body;
+      var cta = a.cta;
+      if (k === 'stretched') {
+        body = breakMin + ' minutes away from the screen. Walk, and leave the work talk at the desk.';
+        cta = 'Take ' + breakMin + ' minutes';
+      }
+      return { show: !S.snoozed && k === advKey, head: a.head, body: body, cta: cta, onCta: function () { self.onCta(k); } };
+    });
+
+    var rows = D.SIG[mood];
+    var signals = rows.map(function (r, i) {
+      var watch = r[5];
+      var sp = self.spark(r[4], 56, 20, 2);
+      var word = (watch ? (r[4] < 0 ? '↓ ' : '↑ ') : '') + r[3];
+      return {
+        label: r[0], value: r[1], unit: r[2], word: word,
+        wordColor: watch ? '#8a5a00' : '#121614',
+        stroke: watch ? '#8a5a00' : '#06874c',
+        d: sp.d, endX: sp.endX, endY: sp.endY,
+        aria: r[0] + ', ' + r[1] + ' ' + r[2] + ', ' + r[3] + '. Open detail',
+        br: i % 2 === 0 ? '1px solid #e4e9e5' : '0',
+        bb: i < 2 ? '1px solid #e4e9e5' : '0',
+        open: function () { self.openSheet({ sheet: 'sig', sigIndex: i }); }
+      };
+    });
+
+    var sr = rows[S.sigIndex] || rows[0];
+    var big = this.spark(sr[4], 350, 110, 6);
+    var sigWatch = sr[5];
+    var sig = {
+      eyebrow: D.SIGFULL[S.sigIndex] || '',
+      word: (sigWatch ? (sr[4] < 0 ? '↓ ' : '↑ ') : '') + sr[3],
+      wordColor: sigWatch ? '#8a5a00' : '#121614',
+      stroke: sigWatch ? '#8a5a00' : '#06874c',
+      value: sr[1], unit: sr[2], d: big.d, endX: big.endX, endY: big.endY,
+      about: D.ABOUT[S.sigIndex] || '',
+      chartAria: sr[0] + ' since 09:00, now ' + sr[3].toLowerCase() + ' compared with your usual range'
+    };
+
+    var whyReasons = D.WHY[mood].map(function (t, i) {
+      return { text: t, delay: (i * 60) + 'ms', dot: (mood === 'recharged' || mood === 'steady') ? '#06874c' : '#f5b83d' };
+    });
+
+    // break
+    var total = S.breakTotal || 600;
+    var el = Math.min(S.elapsed, total);
+    var rem = Math.max(0, total - el);
+    var mm = Math.floor(rem / 60);
+    var ss = Math.floor(rem % 60);
+    var timer = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+    var prog = total ? el / total : 0;
+    var sm = D.SIG[S.startMood] || D.SIG.stretched;
+    var hr0 = parseFloat(sm[0][1]);
+    var hrv0 = parseFloat(sm[1][1]);
+    var br0 = parseFloat(sm[2][1]);
+    var settleNow = Math.min(1, prog * 1.4);
+    var hrNow = Math.round(hr0 - Math.max(0, hr0 - 70) * settleNow);
+    var breathIn = (S.real % 10) < 4;
+
+    // done
+    var p = S.p || 0;
+    var worked = p >= 0.5;
+    var settle = Math.min(1, p * 1.4);
+    var mins = Math.max(1, Math.round(p * total / 60));
+    var hrA = Math.round(hr0 - Math.max(0, hr0 - 70) * settle);
+    var brA = Math.round(br0 - Math.max(0, br0 - 15) * settle);
+    var hrvA = Math.round(hrv0 + Math.max(0, 52 - hrv0) * settle);
+    var doneRows = [
+      { label: 'Heart rate', before: String(hr0), after: String(hrA), unit: 'bpm', delay: '120ms' },
+      { label: 'Breathing', before: String(br0), after: String(brA), unit: '/min', delay: '180ms' },
+      { label: 'Heart rate variability', before: String(hrv0), after: String(hrvA), unit: 'ms', delay: '240ms' }
+    ];
+    var feelOpts = ['Lighter', 'About the same', 'Still wound up'].map(function (l) {
+      var on = S.feel === l;
+      return { label: l, pressed: on ? 'true' : 'false', border: on ? '#06874c' : '#8a948e', bg: on ? '#e3f6ea' : 'transparent', pick: function () { self.setState({ feel: l }); } };
+    });
+
+    // insights
+    var week = D.WEEK.map(function (d, i) {
+      var sel = i === S.day;
+      var is = {};
+      D.KEYS.forEach(function (k) { is[k] = k === d[1]; });
+      return {
+        day: d[0], is: is, bg: D.HERO[d[1]],
+        ring: sel ? '0 0 0 2px #ffffff, 0 0 0 4px #06874c' : '0 0 0 0 rgba(0,0,0,0)',
+        color: sel ? '#121614' : '#4f5854',
+        pressed: sel ? 'true' : 'false',
+        label: d[2] + ', ' + D.MOODS[d[1]].name,
+        pick: function () { self.setState({ day: i }); }
+      };
+    });
+    var dayCards = D.WEEK.map(function (d, i) {
+      return { show: i === S.day, title: d[2] + ' · ' + D.MOODS[d[1]].name, note: d[3] };
+    });
+    var minsWeek = [20, 10, 5, 0, 15, 30, 20 + S.extraBreak];
+    var letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    var maxM = Math.max.apply(null, minsWeek.concat([30]));
+    var bars = minsWeek.map(function (v, i) {
+      var h = v === 0 ? 2 : Math.round((v / maxM) * 72);
+      return { day: letters[i], h: h + 'px', fill: v === 0 ? '#e4e9e5' : '#06874c', delay: (i * 50) + 'ms' };
+    });
+    var sum = minsWeek.reduce(function (a, b) { return a + b; }, 0);
+    var breakTotalLabel = Math.floor(sum / 60) + 'h ' + (sum % 60) + 'm';
+    var barsAria = 'Break minutes per day: ' + minsWeek.join(', ');
+
+    // profile
+    function optRow(label, key) {
+      return { label: label, value: S.settings[key], color: '#121614', open: function () { self.openSheet({ sheet: 'opt', optKey: key }); } };
+    }
+    function infoRow(label, value, key, danger) {
+      return { label: label, value: value, color: danger ? '#c2364a' : '#121614', open: function () { self.openSheet({ sheet: 'info', info: key }); } };
+    }
+    var groups = [
+      { title: 'Connected', eyebrow: 'CONNECTED', rows: [
+        infoRow('Apple Watch', 'Connected', 'watch'),
+        infoRow('Apple Health', 'Sleep, workouts', 'health'),
+        infoRow('Calendar', 'Meeting times', 'calendar')
+      ] },
+      { title: 'Your work rhythm', eyebrow: 'YOUR WORK RHYTHM', rows: [
+        optRow('Working hours', 'hours'),
+        optRow('Working days', 'days'),
+        optRow('Break length', 'breakLen'),
+        optRow('Nudges', 'nudges'),
+        optRow('Quiet hours', 'quiet')
+      ] },
+      { title: 'Privacy', eyebrow: 'PRIVACY', rows: [
+        infoRow('Where your data lives', 'On this phone', 'data'),
+        { label: 'Export my data', value: '', color: '#121614', open: function () { self.showToast('Your export is ready in Files.'); } },
+        infoRow('Delete my data', '', 'del', true)
+      ] }
+    ];
+
+    var opt = S.optKey ? D.OPTS[S.optKey] : null;
+    var optItems = opt ? opt.options.map(function (o) {
+      var on = S.settings[S.optKey] === o;
+      return {
+        label: o, checked: on ? 'true' : 'false', opacity: on ? '1' : '0', weight: on ? '700' : '500',
+        pick: function () {
+          var next = {};
+          for (var k in S.settings) next[k] = S.settings[k];
+          next[S.optKey] = o;
+          self.setState({ settings: next });
+        }
+      };
+    }) : [];
+    var info = S.info ? D.INFO[S.info] : null;
+
+    var sheetTitle = '';
+    if (S.sheet === 'opt' && opt) sheetTitle = opt.title;
+    else if (S.sheet === 'info' && info) sheetTitle = info.title;
+    else if (S.sheet === 'sig') sheetTitle = sr[0];
+    else if (S.sheet === 'why') sheetTitle = 'Why ' + m.name;
+
+    function tabCls(t) {
+      if (S.tab === t) return S.tabDir === 'back' ? 'sm-in-back' : (S.tabDir === 'fwd' ? 'sm-in-fwd' : 'sm-enter');
+      if (S.leaving === t) return S.tabDir === 'back' ? 'sm-out-back' : 'sm-out-fwd';
+      return '';
+    }
+
+    function tabStyle(t) {
+      var on = S.tab === t;
+      return { current: on ? 'page' : 'false', color: on ? '#06874c' : '#4f5854', weight: on ? '700' : '600' };
+    }
+
+    return {
+      showTabs: true,
+      showHome: S.tab === 'home' || S.leaving === 'home',
+      showInsights: S.tab === 'insights' || S.leaving === 'insights',
+      showProfile: S.tab === 'profile' || S.leaving === 'profile',
+      homeCls: tabCls('home'),
+      insightsCls: tabCls('insights'),
+      profileCls: tabCls('profile'),
+      breakCls: S.modalClosing ? 'sm-modal-out' : 'sm-modal',
+      doneCls: S.modalClosing ? 'sm-modal-out' : '',
+      toastCls: S.toastOut ? 'sm-toast-out' : 'sm-toast',
+      isBreak: S.screen === 'break',
+      isDone: S.screen === 'done',
+      tabHome: tabStyle('home'), tabInsights: tabStyle('insights'), tabProfile: tabStyle('profile'),
+      goHome: function () { self.goTab('home'); },
+      goInsights: function () { self.goTab('insights'); },
+      goProfile: function () { self.goTab('profile'); },
+
+      clock: clock, greeting: greeting,
+      grads: D.KEYS.map(function (k) {
+        return { op: k === mood ? '1' : '0', bg: 'linear-gradient(180deg, ' + D.HERO[k] + ' 0%, ' + D.HERO[k] + ' 34%, #ffffff 100%)' };
+      }),
+      isMood: isMood, heroes: heroes, heroBg: D.HERO[mood],
+      openWhy: function () { self.openSheet({ sheet: 'why' }); },
+      nextMood: function () {
+        var order = D.KEYS;
+        var next = order[(order.indexOf(mood) + 1) % order.length];
+        self.setState({ moodOverride: next, afterBreak: false, snoozed: false, clock: null });
+      },
+      advs: advs,
+      showSnoozed: S.snoozed, snoozeText: S.snoozeText,
+      notNow: function () { self.setState({ snoozed: true, snoozeText: "Okay. I'll check in again in 45 minutes." }); },
+      undoSnooze: function () { self.setState({ snoozed: false }); },
+      signals: signals,
+
+      breakLabel: 'BREAK · ' + Math.round(total / 60) + ' MIN',
+      breathLabel: breathIn ? 'Breathe in' : 'Breathe out',
+      timer: timer,
+      remainCaption: 'left of your ' + Math.round(total / 60) + ' minutes',
+      progPct: (prog * 100).toFixed(1) + '%',
+      progNow: String(Math.round(prog * 100)),
+      hrTitle: hrNow < hr0 ? 'Heart rate is settling' : 'Heart rate',
+      hrLive: hrNow < hr0 ? hr0 + ' → ' + hrNow : String(hr0),
+      endBreak: function () { self.setState({ screen: 'done', p: self.state.elapsed / (self.state.breakTotal || 600) }); },
+      cancelBreak: function () { self.closeModal({ screen: 'tabs' }, "No problem. I'll check in later."); },
+
+      doneHead: worked ? 'That one worked.' : 'Short one. It still counts.',
+      doneBody: worked
+        ? 'In ' + mins + ' minutes your heart rate came down and your breathing slowed toward your usual.'
+        : 'Your body had only started to settle. Next time try the full ' + Math.round(total / 60) + ' minutes.',
+      doneRows: doneRows,
+      feelOpts: feelOpts,
+      backToWork: function () {
+        var st = self.state;
+        var wk = (st.p || 0) >= 0.5;
+        var step = { busy: 'steady', stretched: 'steady', pause: 'stretched', steady: 'steady', recharged: 'recharged' };
+        var add = Math.max(1, Math.round((st.p || 0) * (st.breakTotal || 600) / 60));
+        var base = (st.clock || D.TIME[st.startMood] || '17:40').split(':');
+        var tm = parseInt(base[0], 10) * 60 + parseInt(base[1], 10) + add;
+        var hh = Math.floor(tm / 60) % 24;
+        var mi = tm % 60;
+        self.closeModal({
+          clock: (hh < 10 ? '0' : '') + hh + ':' + (mi < 10 ? '0' : '') + mi,
+          screen: 'tabs', afterBreak: wk, snoozed: false,
+          moodOverride: wk ? step[st.startMood] : st.moodOverride,
+          extraBreak: st.extraBreak + add
+        });
+      },
+
+      week: week, dayCards: dayCards, bars: bars, breakTotalLabel: breakTotalLabel, barsAria: barsAria,
+      groups: groups,
+
+      toastA: !!S.toast && S.toastSlot === 0,
+      toastB: !!S.toast && S.toastSlot === 1,
+      toastText: S.toast || '',
+
+      sheetOn: !!S.sheet,
+      sheetCls: S.sheetClosing ? 'sm-sheet-out' : 'sm-sheet-in',
+      scrimCls: S.sheetClosing ? 'sm-scrim-out' : 'sm-scrim-in',
+      closeSheet: function () { self.closeSheet(); },
+      sheetTitle: sheetTitle,
+      isSigSheet: S.sheet === 'sig',
+      isWhySheet: S.sheet === 'why',
+      isOptSheet: S.sheet === 'opt',
+      isInfoSheet: S.sheet === 'info',
+      sig: sig,
+      whyTitle: m.name,
+      whyReasons: whyReasons,
+      optItems: optItems,
+      infoBody: info ? info.body : '',
+      infoHasAction: !!(info && info.action),
+      infoActionLabel: info && info.action ? info.action : '',
+      infoAction: function () {
+        var inf = D.INFO[self.state.info];
+        self.closeSheet();
+        if (inf && inf.toast) self.showToast(inf.toast);
+      }
+    };
+  }
+}
+
+(function () {
+  var q = new URLSearchParams(location.search);
+  var props = {};
+  if (q.get('mood')) props.mood = q.get('mood');
+  if (q.get('tab')) props.startTab = q.get('tab');
+  if (q.get('screen')) props.startScreen = q.get('screen');
+  props.demoSpeed = q.get('speed') || '30x';
+
+  var phone = document.getElementById('phone');
+  function fit() {
+    var small = window.innerWidth <= 430;
+    var s = small ? window.innerWidth / 390 : Math.min(1, (window.innerHeight - 48) / 844);
+    phone.style.transform = s < 1 || small ? 'scale(' + s + ')' : '';
+    phone.style.marginBottom = (s < 1 || small) ? (844 * (s - 1)) + 'px' : '';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+  mountApp(Component, props, phone);
+})();
+</script>
+</body>
+</html>
