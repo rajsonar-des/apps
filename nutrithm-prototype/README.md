@@ -21,7 +21,7 @@ Or download this repo and open `index.html` in any modern browser. It needs no i
   - **Explore:** cook, recipe, order online
   - **Plan, Insights and Profile:** Plan, Insights, share report, profile
 - **The horizon:** on Home, drag the sun along the digestive-power curve to see any hour. The sky, the agni word and the plate change with it, and let go returns it to now.
-- **Fits any device:** on a laptop, tablet or desktop the app sits in an iPhone-style frame on a transparent canvas, scaled to the window. On a phone it fills the screen without the frame. Use the on-screen controls to switch light and dark themes, skip onboarding, or reset to the welcome screen. The theme choice is saved when you reload.
+- **Fits any device:** on a laptop, tablet or desktop the app sits in an iPhone-style frame on a transparent canvas, scaled to the window. On a phone it fills the screen without the frame. Use the controls below the phone to switch light and dark themes, skip onboarding, or reset to the welcome screen. The theme choice is saved when you reload.
 
 ## Files
 
