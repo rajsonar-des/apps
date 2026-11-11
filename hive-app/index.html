@@ -34,15 +34,16 @@
   }
   .controls button:hover { background: #F1F3F4; }
   @media (max-width: 480px) {
-    body { justify-content: space-between; padding: 0 0 8px; }
-    .device { width: 100vw; height: calc(100vh - 44px); padding: 0; border-radius: 0; background: none; box-shadow: none; zoom: 1; }
+    body { justify-content: space-between; padding: 0 0 8px; height: 100vh; height: 100dvh; }
+    .device { width: 100vw; height: calc(100vh - 44px); height: calc(100dvh - 44px); padding: 0; border-radius: 0; background: none; box-shadow: none; zoom: 1; display: flex; align-items: center; justify-content: center; }
     .device::before { display: none; }
-    .screen { width: 100%; height: 100%; border-radius: 0; }
+    .screen { width: 390px; height: 844px; border-radius: 0; flex: none; zoom: var(--mfit, 1); }
     .island { display: none; }
   }
 </style>
 <script src="runtime.js"></script>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HIVE App · Prototype</title>
 <style id="screen-transitions">
   @media (prefers-reduced-motion: no-preference) {
@@ -795,6 +796,8 @@ button:focus-visible,input:focus-visible{outline:2px solid #1A73E8;outline-offse
   function fit(){
     var s = Math.min(1, (window.innerHeight - 24 - 46) / 866, (window.innerWidth - 24) / 414);
     document.documentElement.style.setProperty('--fit', s > 0 ? s : 1);
+    var m = Math.min((window.innerHeight - 44) / 844, window.innerWidth / 390);
+    document.documentElement.style.setProperty('--mfit', m > 0 ? m : 1);
   }
   fit(); window.addEventListener('resize', fit);
 })();
